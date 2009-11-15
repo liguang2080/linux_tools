@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby -w
+
+class String
+  def replace_with_array(regex, arr)
+    self.gsub(regex) { |str| arr[self.scan(regex).index(str)] }
+  end
+
+  def to_tr
+    str = "<tr>"
+    gsub!("|") do |split|
+      starts_with?(split) ? "<td>" : (self.ends_with?(split) ? "</td>" : "</td><td>")
+    end
+    str += self
+    str += "</tr>"
+  end
+
+  def ends_with?(suffix)
+    chomp(suffix) == self     
+  end
+
+  def starts_with?(prefix)
+    index(prefix) == 0
+  end
+end
+
+class Array
+  def sub_array(arr)
+    self.inject([]) { |rv,i|  rv << i.to_i - arr[self.index(i)].to_i; rv}
+  end
+  def shift!
+    self - [self[0]]
+  end
+end
+
+
+if ARGV.size != 2
+  puts "usage: stats_diff origin now"
+  exit
+end
+
+origin = File.readlines(ARGV[0]).shift!
+now = File.readlines(ARGV[1]).shift!
+
+return_content = []
+
+now.each_with_index do |line,index|
+  return_content <<  line.replace_with_array(/\d+/, line.scan(/\d+/).sub_array(origin[index].scan(/\d+/)))
+end
+
+return_table = "<table>"
+return_content.each { |line|  return_table += line.to_tr if line =~ /\w/ }
+return_table += "</table>"
+
+puts return_table

@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby 
+require "rubygems"
+require "right_aws"
+
+class MyCloudFront
+  class << self
+    
+    def connect!
+      @acf = RightAws::AcfInterface.new('AKIAIRXV5QKMV54AINLA','uqZVOgWM1wscxE5jOBqm90roGRNF7j8IRuBbSLwY')
+      @distribution = @acf.get_distribution("E3W46NBHKU1X8U")
+      @config = @acf.get_distribution_config(@distribution[:aws_id])
+    end
+    
+    def enable
+      is_able = @config[:enabled] 
+      if is_able
+        puts "already enable... just go to download it"
+      else
+        @config[:enabled] = true
+        puts (@acf.set_distribution_config(@distribution[:aws_id], @config) ? "success enable... you can download after a few minutes" : "enable error...")
+      end
+    end
+    
+    
+    def disable
+       is_able = @config[:enabled] 
+        unless is_able
+          puts "already disable... just do do ..."
+        else
+          @config[:enabled] = false
+          puts (@acf.set_distribution_config(@distribution[:aws_id], @config) ? "success disable... you can't download after a while" : "disabe error...")
+        end
+    end
+
+    def status
+      puts "-------"
+      puts "分发:" + @distribution.inspect
+      puts "-------"
+      puts "配置:" + @config.inspect
+      puts "-------"
+    end
+    
+  end
+end
+
+
+
+
+if ARGV.size != 1
+  puts "usage: cloudfront [enable|disable|status]"
+end
+
+MyCloudFront.connect!
+
+case ARGV[0]
+when "status"
+  MyCloudFront.status
+when "enable"
+  MyCloudFront.enable
+when "disable"
+  MyCloudFront.disable
+else
+  puts "usage: cloudfront [enable|disable|status]"
+end
+

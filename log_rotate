@@ -1,0 +1,49 @@
+#!/usr/local/ruby/bin/ruby
+
+#description_start
+# 自动将log/production.log文件备份到以当天日期为名称的文件
+# 比如:2008-10-16-1.production.log
+# 最后面的1为版本号,default为1,如果一天轮换多次,版本号递增
+# 2008-10-16-2.production.log,2008-10-16-3.production.log以此类推
+#description_end
+
+require "fileutils"
+require "date"
+# 得到某天的版本号
+def get_version(source_dir,log_file_name,date)
+  Dir["#{source_dir}/#{date}*.#{log_file_name}"].inject(0) do |version,file|
+    regxp = /(\d+)-(\d+)-(\d+)-(\d+)\.#{log_file_name}/
+    if regxp.match file.last_filename
+      version =  $4.to_i > version ? $4.to_i : version # 返回最大的版本
+    end
+    version
+  end
+end
+
+
+class String
+  # 返回路径最后一个真实文件名
+  def last_filename
+    File.split(self).last
+  end
+end
+
+
+if ARGV.size != 2
+  puts "usage:  log_rotate dir file_name"
+  exit
+end
+
+source_dir = ARGV[0]      #备份目标文件夹
+log_file = ARGV[1]           #要操作的日志文件
+
+file_path = "#{source_dir}/#{log_file}"
+
+puts "log_rotate #{file_path}"
+dest_file = File.join(source_dir,"#{Date.today.to_s}-#{get_version(source_dir,log_file,Date.today).succ.to_s}.#{log_file}") # 得到此次要备份的版本号
+
+FileUtils.cp file_path, dest_file
+`tar  zcvf #{dest_file}.tar.gz #{dest_file}`
+
+f=File.open(file_path,'w')
+f.close

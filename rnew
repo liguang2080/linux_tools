@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby -w
+path = ARGV[0]
+raise "specify filename to create" unless path
+path = path + ".rb"
+
+File.open(path, "w") do |f|
+  f.puts "#!/usr/bin/env ruby -w"
+end
+
+File.chmod(0755, path)
+
+system "mate", path
